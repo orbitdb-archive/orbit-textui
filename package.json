@@ -1,0 +1,23 @@
+{
+  "name": "orbit-textui",
+  "version": "0.0.1",
+  "description": "Terminal client for Orbit",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Haad",
+  "license": "MIT",
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "bluebird": "^3.4.1",
+    "bs58": "^3.0.0",
+    "ipfs-api": "^6.0.3",
+    "ipfs-post": "0.0.10",
+    "lodash": "^4.15.0",
+    "logplease": "^1.2.7",
+    "orbit-crypto": "0.0.4",
+    "orbit-db": "^0.11.1"
+  }
+}
