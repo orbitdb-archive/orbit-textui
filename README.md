@@ -1,8 +1,8 @@
 # orbit-textui
 
-> Terminal client for Orbit
+> Terminal client for [Orbit](https://github.com/haadcode/orbit)
 
-***This is a prototype***
+***A prototype terminal client for [Orbit](https://github.com/haadcode/orbit)***
 
 <img src="https://raw.githubusercontent.com/haadcode/orbit-textui/master/screenshot.gif">
 
@@ -11,7 +11,8 @@
 ## Run
 
 ```
-git clone
+git clone https://github.com/haadcode/orbit-textui.git
+cd orbit-textui
 npm install
 npm start
 ```
