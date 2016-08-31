@@ -23,6 +23,10 @@ Or instead of `npm start`, run:
 node index <nickname>
 ```
 
+## Contribute
+
+Contributions are welcome! Please open [an issue](https://github.com/haadcode/orbit-textui/issues) if there is something you would like to see.
+
 ## License
 
-MIT
+[MIT](LICENSE)
