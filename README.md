@@ -9,10 +9,10 @@
 ***Hats off to [irssi](https://en.wikipedia.org/wiki/Irssi), inseparable since 2001.***
 
 ## Run
+*Make sure you have an [IPFS](dist.ipfs.io) daemon running before starting*
 
 ```
-git clone https://github.com/haadcode/orbit-textui.git
-cd orbit-textui
+git clone https://github.com/haadcode/orbit-textui.git && cd orbit-textui
 npm install
 npm start
 ```
