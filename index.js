@@ -5,6 +5,7 @@ const blessed = require('blessed')
 const Ipfs = require('ipfs-api')
 const Orbit = require('./Orbit.js')
 const Promise = require('bluebird')
+const logo = require('./logo.js')
 
 // Options
 let channel = 'test222'
@@ -13,17 +14,44 @@ let user = process.argv[2] || 'anonymous' + new Date().getTime().toString().spli
 // State
 const ipfs = new Ipfs()
 let orbit
-let _currentChannel// = '!orbit.mainWindow'
+let _currentChannel
 let unreadMessages = {}
 let channelViews = {}
+
 // Constants
-const bracketOpen = '{cyan-fg}[{/cyan-fg}'
-const bracketClose = '{cyan-fg}]{/cyan-fg}'
-const notificationMarker = '{blue-fg}-{/blue-fg}!{blue-fg}-{/blue-fg}'
+const themes = {
+  'blue': {
+    barColor: 'blue',
+    higlightColor: 'cyan',
+  },
+  'magenta': {
+    barColor: 'magenta',
+    higlightColor: 'cyan',
+  },
+  'yellow': {
+    barColor: 'yellow',
+    barTextColor: 'black',
+    higlightColor: 'magenta',
+  },
+  'black': {
+    barColor: 'black',
+    barTextColor: 'white',
+    higlightColor: 'white',
+  },
+}
+const theme = themes['blue']
+const backgroundColor = 'transparent'
+const textColor = 'white'
+
+const mainColor = 'green'
+const higlight = 'blue'
+const bracketOpen = `{${theme.higlightColor}-fg}[{/${theme.higlightColor}-fg}`
+const bracketClose = `{${theme.higlightColor}-fg}]{/${theme.higlightColor}-fg}`
+const notificationMarker = `{${theme.barColor}-fg}-{/${theme.barColor}-fg}!{${theme.barColor}-fg}-{/${theme.barColor}-fg}`
 
 const barStyle = {
-  fg: 'white',
-  bg: 'blue',
+  fg: theme.barTextColor,
+  bg: theme.barColor,
 }
 
 var screen = blessed.screen({
@@ -33,7 +61,7 @@ var screen = blessed.screen({
 })
 
 const createChannelView = () => {
-  const messagesContainer = blessed.box({
+  const view = blessed.box({
     top: 1,
     height: '100%-3',
     content: '',
@@ -41,15 +69,19 @@ const createChannelView = () => {
     tags: true,
     scrollable: true,
     alwaysScroll: true,
+    style: {
+      fg: textColor,
+      bg: backgroundColor
+    }
   })
   // 🎁
-  messagesContainer.on('click', function(data) {
+  view.on('click', function(data) {
     if(orbit && _currentChannel) orbit.send(_currentChannel, "🐋")
   })
-  return messagesContainer
+  return view
 }
 
-let messagesContainer = createChannelView()
+let logWindow = createChannelView()
 
 var statusBar = blessed.textbox({
   bottom: 1,
@@ -81,7 +113,8 @@ var channelBox = blessed.textbox({
   height: 1,
   tags: true,
   style: {
-    fg: 'white',
+    fg: textColor,
+    bg: backgroundColor
   }
 })
 
@@ -90,7 +123,8 @@ var inputField = blessed.textbox({
   width: "100%",
   height: 1,
   style: {
-    fg: 'white',
+    fg: textColor,
+    bg: backgroundColor
   }
 })
 
@@ -109,13 +143,13 @@ const sanitizeChannelName = (ircChannel) => {
 
 // Append our box to the screen.
 screen.append(headerBar)
-screen.append(messagesContainer)
+screen.append(logWindow)
 screen.append(statusBar)
 screen.append(commandBar)
 screen.append(channelBox)
 screen.append(inputField)
 
-channelViews['!orbit.mainWindow'] = messagesContainer
+channelViews['!orbit.mainWindow'] = logWindow
 
 // Quit on Escape, q, or Control-C.
 screen.key(['escape', 'q', 'C-c'], function(ch, key) {
@@ -139,7 +173,7 @@ const send = (input) => {
     else if (cmd === 'leave' || cmd === 'part') {
       if(args[1]) {
         const channel = sanitizeChannelName(args[1])
-        const isChannelOpen = Object.keys(orbit.channels).indexOf(channel) != -1
+        const isChannelOpen = Object.keys(orbit.channels).includes(channel)
         if (isChannelOpen)
           orbit.leave(channel)
       } else if (_currentChannel) {
@@ -163,16 +197,16 @@ const read = () => {
   })
 }
 
-log = (text) => {
-  const t = getFormattedTime(new Date().getTime()) + " " + notificationMarker + " " + text
+log = (text, textOnly) => {
+  const t = textOnly ? text : getFormattedTime(new Date().getTime()) + " " + notificationMarker + " " + text
   if(channelViews[_currentChannel]) {
     channelViews[_currentChannel].pushLine(t)
     channelViews[_currentChannel].scrollTo(10000)
-    messagesContainer.pushLine(t)
-    messagesContainer.scrollTo(10000)
+    logWindow.pushLine(t)
+    logWindow.scrollTo(10000)
   } else {
-    messagesContainer.pushLine(t)
-    messagesContainer.scrollTo(10000)
+    logWindow.pushLine(t)
+    logWindow.scrollTo(10000)
   }
 
   screen.render()
@@ -195,13 +229,13 @@ const updateUI = () => {
   inputField.left = channelBox.width
 
   const time = new Date().getHours() + ":" + new Date().getMinutes()
-  let channels = !_currentChannel ? `{bold}orbit{/bold}{cyan-fg}|{/cyan-fg}` : `orbit{cyan-fg}|{/cyan-fg}`
+  let channels = !_currentChannel ? `{bold}orbit{/bold}{${theme.higlightColor}-fg}${Object.keys(orbit.channels).length > 0 ? "|" : ""}{/${theme.higlightColor}-fg}` : `orbit{${theme.higlightColor}-fg}|{/${theme.higlightColor}-fg}`
   channels += Object.keys(orbit.channels).map((e) => {
     return e === _currentChannel ?
       `{bold}#${e}{/bold} (${unreadMessages[e]})` :
       '#' + e + " (" + unreadMessages[e] + ")"
   })
-  .join('{cyan-fg}|{/cyan-fg}')
+  .join(`{${theme.higlightColor}-fg}|{/${theme.higlightColor}-fg}`)
 
   const channelsInfo = `${bracketOpen}${channels}${bracketClose}`
   statusBar.setContent(`${bracketOpen}${time}${bracketClose} ${bracketOpen}${user}${bracketClose} ${channelsInfo}`)
@@ -210,42 +244,43 @@ const updateUI = () => {
 }
 
 orbit.events.on('joined', (channel) => {
-  messagesContainer.hide()
+  logWindow.hide()
   if(_currentChannel) channelViews[_currentChannel].hide()
   channelViews[channel] = createChannelView(channel)
   unreadMessages[channel] = 0
   screen.insert(channelViews[channel], 1)
   _currentChannel = channel
-  log(`{cyan-fg}{bold}${user}{/bold}{/cyan-fg} has joined channel {bold}#${channel}{/bold}`)
+  log(`{${theme.higlightColor}-fg}{bold}${user}{/bold}{/${theme.higlightColor}-fg} has joined channel {bold}#${channel}{/bold}`)
   updateUI()
 })
 
 orbit.events.on('left', (channel) => {
-  messagesContainer.hide()
   screen.remove(channelViews[channel])
   channelViews[channel].destroy()
   delete unreadMessages[channel]
   if(_currentChannel === channel) {
     _currentChannel = null
-    messagesContainer.show()
+    logWindow.show()
   }
 
-  log(`{cyan-fg}{bold}${user}{/bold}{/cyan-fg} has left channel {bold}#${channel}{/bold}`)
+  log(`{${theme.higlightColor}-fg}{bold}${user}{/bold}{/${theme.higlightColor}-fg} has left channel {bold}#${channel}{/bold}`)
   updateUI()
 })
 
 const addMessagesToUI = (channel, messages) => {
   Promise.map(messages, (msg) => {
     return orbit.getPost(msg.payload.value).then((post) => {
-      const username = `{grey-fg}<{/grey-fg} {bold}${post.meta.from}{/bold}{grey-fg}>{/grey-fg}`
-      const line = `${getFormattedTime(post.meta.ts)} ${username} ${post.content}`
-      channelViews[channel].pushLine(line)
-      channelViews[channel].scrollTo(10000)
+      return orbit.getUser(post.meta.from).then((user) => {
+        const username = `{grey-fg}<{/grey-fg} {bold}${user.name}{/bold}{grey-fg}>{/grey-fg}`
+        const line = `${getFormattedTime(post.meta.ts)} ${username} ${post.content}`
+        channelViews[channel].pushLine(line)
+        channelViews[channel].scrollTo(10000)
 
-      if(channel !== _currentChannel)
-        unreadMessages[channel] ? unreadMessages[channel] += 1 : unreadMessages[channel] = 1
+        if(channel !== _currentChannel)
+          unreadMessages[channel] ? unreadMessages[channel] += 1 : unreadMessages[channel] = 1
 
-      return
+        return
+      })
     })
   }, { concurrency: 1 })
     .then((res) => updateUI())
@@ -262,11 +297,11 @@ const nextView = (direction) => {
   if(!direction) direction = 'next'
 
   let currentIndex = Object.keys(orbit.channels).indexOf(_currentChannel)
-  if((currentIndex === Object.keys(orbit.channels).length-1 && direction === 'next')
+  if(_currentChannel && (currentIndex === Object.keys(orbit.channels).length-1 && direction === 'next')
     || (currentIndex === 0 && direction === 'prev')) {
     // go to the main window
     channelViews[_currentChannel].hide()
-    messagesContainer.show()
+    logWindow.show()
     _currentChannel = null
     updateUI()
   } else {
@@ -278,7 +313,7 @@ const nextView = (direction) => {
 
     const channel = Object.keys(orbit.channels)[nextIndex]
     if(channel) {
-      if(!_currentChannel) messagesContainer.hide()
+      if(!_currentChannel) logWindow.hide()
       if(_currentChannel) channelViews[_currentChannel].hide()
       channelViews[channel].show()
       unreadMessages[channel] = 0
@@ -287,6 +322,10 @@ const nextView = (direction) => {
     }
   }
 }
+
+inputField.key(['C-c'], function(ch, key) {
+  return process.exit(0)
+})
 
 inputField.key(['C-n'], function(ch, key) {
   nextView('next')
@@ -311,12 +350,17 @@ const logHelp = () => {
   log(`${boldText("/part <channel>")} - Leave <channel>`)
   log(`${boldText("/quit")} - Exit the program`)
   log("")
+  log(boldText("Click the messages!"))
+  log("")
 }
 
 // Init UI
 screen.title = 'Orbit'
 commandBar.setContent(`{right}Type ${boldText("/quit")} to exit. ${boldText("Ctrl-n")} and ${boldText("Ctrl-p")} to move between channels.{/right}`)
 headerBar.setContent(` 🐼  Orbit v0.0.1 - https://github.com/haadcode/orbit`)
+
+// Output the logo
+log(logo, true)
 
 // Connect to Orbit network
 log("Connecting to network at 178.62.241.75:3333")
