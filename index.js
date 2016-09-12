@@ -8,7 +8,7 @@ const Promise = require('bluebird')
 const logo = require('./logo.js')
 
 // Options
-let channel = 'test222'
+let channel = 'ipfs'
 let user = process.argv[2] || 'anonymous' + new Date().getTime().toString().split('').splice(-4, 4).join('')
 
 // State
@@ -216,7 +216,7 @@ orbit = new Orbit(ipfs)
 
 /* Event handlers */
 orbit.events.on('connected', (network) => {
-  log(`Connected to {bold}${network.name}{/bold} at ${network.publishers[0]}`)
+  log(`Connected to {bold}${network.name}{/bold}`)
   logHelp()
   screen.render()
 })
@@ -363,6 +363,7 @@ headerBar.setContent(` 🐼  Orbit v0.0.1 - https://github.com/haadcode/orbit`)
 log(logo, true)
 
 // Connect to Orbit network
-log("Connecting to network at 178.62.241.75:3333")
-orbit.connect('178.62.241.75:3333', user)
-  .then(() => orbit.join(channel))
+log("Connecting to IPFS Pubsub Network")
+orbit.connect(user)
+  // .then(() => orbit.join(channel))
+  .catch((e) => console.error(e))
