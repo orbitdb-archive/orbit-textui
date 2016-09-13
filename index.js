@@ -1,10 +1,12 @@
+'use strict'
+
 require('logplease').setLogLevel('ERROR')
 
 const _ = require('lodash')
+const Promise = require('bluebird')
 const blessed = require('blessed')
 const Ipfs = require('ipfs-api')
-const Orbit = require('./Orbit.js')
-const Promise = require('bluebird')
+const Orbit = require('orbit-core')
 const logo = require('./logo.js')
 
 // Options
@@ -180,6 +182,10 @@ const send = (input) => {
         orbit.leave(_currentChannel)
       }
     }
+    else if ((cmd === 'clear')) {
+      logWindow.setContent('')
+      screen.render()
+    }
 
   } else {
     orbit.send(_currentChannel, input)
@@ -197,7 +203,7 @@ const read = () => {
   })
 }
 
-log = (text, textOnly) => {
+const log = (text, textOnly) => {
   const t = textOnly ? text : getFormattedTime(new Date().getTime()) + " " + notificationMarker + " " + text
   if(channelViews[_currentChannel]) {
     channelViews[_currentChannel].pushLine(t)
@@ -363,7 +369,7 @@ headerBar.setContent(` 🐼  Orbit v0.0.1 - https://github.com/haadcode/orbit`)
 log(logo, true)
 
 // Connect to Orbit network
-log("Connecting to IPFS Pubsub Network")
+log("Connecting to the network")
 orbit.connect(user)
-  // .then(() => orbit.join(channel))
+  .then(() => orbit.join(channel))
   .catch((e) => console.error(e))

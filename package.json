@@ -14,11 +14,10 @@
     "bluebird": "^3.4.1",
     "bs58": "^3.0.0",
     "ipfs-api": "https://github.com/haadcode/js-ipfs-api.git",
-    "ipfs-post": "0.0.11",
     "lodash": "^4.15.0",
     "logplease": "^1.2.7",
+    "orbit-core": "0.0.1",
     "orbit-crypto": "0.0.7",
-    "orbit-db": "https://github.com/haadcode/orbit-db.git#feat\/ipfs-pubsub"
+    "orbit-db": "https://github.com/haadcode/orbit-db.git#feat/ipfs-pubsub"
   }
 }
-
