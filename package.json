@@ -12,12 +12,8 @@
   "dependencies": {
     "blessed": "^0.1.81",
     "bluebird": "^3.4.1",
-    "bs58": "^3.0.0",
-    "ipfs-api": "^8.0.3",
-    "ipfs-post": "0.0.11",
-    "lodash": "^4.15.0",
+    "ipfs-daemon": "0.0.3",
     "logplease": "^1.2.7",
-    "orbit-crypto": "0.0.7",
-    "orbit-db": "^0.11.1"
+    "orbit_": "0.0.4"
   }
 }

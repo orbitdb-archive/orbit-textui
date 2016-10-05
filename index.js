@@ -1,18 +1,18 @@
+'use strict'
+
 require('logplease').setLogLevel('ERROR')
 
-const _ = require('lodash')
-const blessed = require('blessed')
-const Ipfs = require('ipfs-api')
-const Orbit = require('./Orbit.js')
 const Promise = require('bluebird')
+const blessed = require('blessed')
+const IpfsDaemon = require('ipfs-daemon')
+const Orbit = require('orbit_')
 const logo = require('./logo.js')
 
 // Options
-let channel = 'test222'
+let channel = 'kk'
 let user = process.argv[2] || 'anonymous' + new Date().getTime().toString().split('').splice(-4, 4).join('')
 
 // State
-const ipfs = new Ipfs()
 let orbit
 let _currentChannel
 let unreadMessages = {}
@@ -180,6 +180,10 @@ const send = (input) => {
         orbit.leave(_currentChannel)
       }
     }
+    else if ((cmd === 'clear')) {
+      logWindow.setContent('')
+      screen.render()
+    }
 
   } else {
     orbit.send(_currentChannel, input)
@@ -197,7 +201,7 @@ const read = () => {
   })
 }
 
-log = (text, textOnly) => {
+const log = (text, textOnly) => {
   const t = textOnly ? text : getFormattedTime(new Date().getTime()) + " " + notificationMarker + " " + text
   if(channelViews[_currentChannel]) {
     channelViews[_currentChannel].pushLine(t)
@@ -211,15 +215,6 @@ log = (text, textOnly) => {
 
   screen.render()
 }
-
-orbit = new Orbit(ipfs)
-
-/* Event handlers */
-orbit.events.on('connected', (network) => {
-  log(`Connected to {bold}${network.name}{/bold} at ${network.publishers[0]}`)
-  logHelp()
-  screen.render()
-})
 
 const updateUI = () => {
   const channelBoxText = _currentChannel ? `[#${_currentChannel}] ` : `[(orbit)] `
@@ -243,30 +238,6 @@ const updateUI = () => {
   screen.render()
 }
 
-orbit.events.on('joined', (channel) => {
-  logWindow.hide()
-  if(_currentChannel) channelViews[_currentChannel].hide()
-  channelViews[channel] = createChannelView(channel)
-  unreadMessages[channel] = 0
-  screen.insert(channelViews[channel], 1)
-  _currentChannel = channel
-  log(`{${theme.higlightColor}-fg}{bold}${user}{/bold}{/${theme.higlightColor}-fg} has joined channel {bold}#${channel}{/bold}`)
-  updateUI()
-})
-
-orbit.events.on('left', (channel) => {
-  screen.remove(channelViews[channel])
-  channelViews[channel].destroy()
-  delete unreadMessages[channel]
-  if(_currentChannel === channel) {
-    _currentChannel = null
-    logWindow.show()
-  }
-
-  log(`{${theme.higlightColor}-fg}{bold}${user}{/bold}{/${theme.higlightColor}-fg} has left channel {bold}#${channel}{/bold}`)
-  updateUI()
-})
-
 const addMessagesToUI = (channel, messages) => {
   Promise.map(messages, (msg) => {
     return orbit.getPost(msg.payload.value).then((post) => {
@@ -286,10 +257,6 @@ const addMessagesToUI = (channel, messages) => {
     .then((res) => updateUI())
     .catch((e) => console.error(e))
 }
-
-orbit.events.on('message', (channel, message) => {
-  addMessagesToUI(channel, [message])
-})
 
 /* Start */
 
@@ -362,7 +329,48 @@ headerBar.setContent(` 🐼  Orbit v0.0.1 - https://github.com/haadcode/orbit`)
 // Output the logo
 log(logo, true)
 
-// Connect to Orbit network
-log("Connecting to network at 178.62.241.75:3333")
-orbit.connect('178.62.241.75:3333', user)
-  .then(() => orbit.join(channel))
+log("Starting IPFS daemon...")
+IpfsDaemon().then((res) => {
+  orbit = new Orbit(res.ipfs, { maxHistory: 0 })
+
+  /* Event handlers */
+  orbit.events.on('connected', (network) => {
+    log(`Connected to {bold}${network.name}{/bold}`)
+    logHelp()
+    screen.render()
+  })
+
+  orbit.events.on('joined', (channel) => {
+    logWindow.hide()
+    if(_currentChannel) channelViews[_currentChannel].hide()
+    channelViews[channel] = createChannelView(channel)
+    unreadMessages[channel] = 0
+    screen.insert(channelViews[channel], 1)
+    _currentChannel = channel
+    log(`{${theme.higlightColor}-fg}{bold}${user}{/bold}{/${theme.higlightColor}-fg} has joined channel {bold}#${channel}{/bold}`)
+    updateUI()
+  })
+
+  orbit.events.on('left', (channel) => {
+    screen.remove(channelViews[channel])
+    channelViews[channel].destroy()
+    delete unreadMessages[channel]
+    if(_currentChannel === channel) {
+      _currentChannel = null
+      logWindow.show()
+    }
+
+    log(`{${theme.higlightColor}-fg}{bold}${user}{/bold}{/${theme.higlightColor}-fg} has left channel {bold}#${channel}{/bold}`)
+    updateUI()
+  })
+
+  orbit.events.on('message', (channel, message) => {
+    addMessagesToUI(channel, [message])
+  })
+
+  // Connect to Orbit network
+  log("Connecting to the network")
+  orbit.connect(user)
+    .then(() => orbit.join(channel))
+    .catch((e) => console.error(e))
+})
