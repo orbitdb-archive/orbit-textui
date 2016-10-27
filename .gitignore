@@ -1,3 +1,5 @@
 node_modules/
 *sublime*
 keys/
+data/
+*.log

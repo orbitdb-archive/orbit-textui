@@ -9,8 +9,12 @@ const Orbit = require('orbit_')
 const logo = require('./logo.js')
 
 // Options
-let channel = 'kk'
+let channel = 'ipfs'
 let user = process.argv[2] || 'anonymous' + new Date().getTime().toString().split('').splice(-4, 4).join('')
+
+// Directories to save IPFS and Orbit data to
+const dataDir = './data/' + user
+const ipfsDataDir = dataDir + '/ipfs'
 
 // State
 let orbit
@@ -39,6 +43,7 @@ const themes = {
     higlightColor: 'white',
   },
 }
+
 const theme = themes['blue']
 const backgroundColor = 'transparent'
 const textColor = 'white'
@@ -76,7 +81,10 @@ const createChannelView = () => {
   })
   // 🎁
   view.on('click', function(data) {
-    if(orbit && _currentChannel) orbit.send(_currentChannel, "🐋")
+    if(orbit && _currentChannel) {
+      orbit.send(_currentChannel, "🐋")
+        .catch((e) => log(`{${theme.higlightColor}-fg}ERROR!{/${theme.higlightColor}-fg} ${e}`))
+    }
   })
   return view
 }
@@ -186,7 +194,8 @@ const send = (input) => {
     }
 
   } else {
-    orbit.send(_currentChannel, input)
+    orbit.send(_currentChannel, input)      
+      .catch((e) => log(`{${theme.higlightColor}-fg}ERROR!{/${theme.higlightColor}-fg} ${e}`))
   }
 }
 
@@ -330,8 +339,24 @@ headerBar.setContent(` 🐼  Orbit v0.0.1 - https://github.com/haadcode/orbit`)
 log(logo, true)
 
 log("Starting IPFS daemon...")
-IpfsDaemon().then((res) => {
-  orbit = new Orbit(res.ipfs, { maxHistory: 0 })
+
+const daemonOptions = { 
+  IpfsDataDir: ipfsDataDir,
+  Addresses: {
+    API: '/ip4/127.0.0.1/tcp/0',
+    Swarm: ['/ip4/0.0.0.0/tcp/0'],
+    Gateway: '/ip4/0.0.0.0/tcp/0'
+  },
+}
+
+IpfsDaemon(daemonOptions).then((res) => {
+  const options = {
+    cacheFile: dataDir + '/orbit.cache',
+    maxHistory: 0, 
+    keystorePath: dataDir + '/keys'
+  }
+
+  orbit = new Orbit(res.ipfs, options)
 
   /* Event handlers */
   orbit.events.on('connected', (network) => {
