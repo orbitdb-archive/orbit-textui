@@ -12,8 +12,8 @@
   "dependencies": {
     "blessed": "^0.1.81",
     "bluebird": "^3.4.1",
-    "ipfs-daemon": "0.0.3",
-    "logplease": "^1.2.7",
-    "orbit_": "0.0.4"
+    "ipfs-daemon": "^0.1.0",
+    "logplease": "^1.2.8",
+    "orbit_": "^0.0.10"
   }
 }
