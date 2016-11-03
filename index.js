@@ -351,7 +351,7 @@ const daemonOptions = {
 
 IpfsDaemon(daemonOptions).then((res) => {
   const options = {
-    cacheFile: dataDir + '/orbit.cache',
+    cachePath: dataDir + '/orbit-db',
     maxHistory: 0, 
     keystorePath: dataDir + '/keys'
   }
