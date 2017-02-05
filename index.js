@@ -248,20 +248,17 @@ const updateUI = () => {
 }
 
 const addMessagesToUI = (channel, messages) => {
-  Promise.map(messages, (msg) => {
-    return orbit.getPost(msg.payload.value).then((post) => {
-      return orbit.getUser(post.meta.from).then((user) => {
-        const username = `{grey-fg}<{/grey-fg} {bold}${user.name}{/bold}{grey-fg}>{/grey-fg}`
-        const line = `${getFormattedTime(post.meta.ts)} ${username} ${post.content}`
-        channelViews[channel].pushLine(line)
-        channelViews[channel].scrollTo(10000)
+  Promise.map(messages, (post) => {
+    const user = post.meta.from
+    const username = `{grey-fg}<{/grey-fg} {bold}${user.name}{/bold}{grey-fg}>{/grey-fg}`
+    const line = `${getFormattedTime(post.meta.ts)} ${username} ${post.content}`
+    channelViews[channel].pushLine(line)
+    channelViews[channel].scrollTo(10000)
 
-        if(channel !== _currentChannel)
-          unreadMessages[channel] ? unreadMessages[channel] += 1 : unreadMessages[channel] = 1
+    if(channel !== _currentChannel)
+      unreadMessages[channel] ? unreadMessages[channel] += 1 : unreadMessages[channel] = 1
 
-        return
-      })
-    })
+    return
   }, { concurrency: 1 })
     .then((res) => updateUI())
     .catch((e) => console.error(e))
@@ -349,14 +346,15 @@ const daemonOptions = {
   },
 }
 
-IpfsDaemon(daemonOptions).then((res) => {
+const ipfs = new IpfsDaemon(daemonOptions)//.then((res) => {
+ipfs.on('ready', () => {
   const options = {
     cachePath: dataDir + '/orbit-db',
     maxHistory: 0, 
     keystorePath: dataDir + '/keys'
   }
 
-  orbit = new Orbit(res.ipfs, options)
+  orbit = new Orbit(ipfs, options)
 
   /* Event handlers */
   orbit.events.on('connected', (network) => {
