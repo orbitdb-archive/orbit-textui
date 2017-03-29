@@ -2,19 +2,20 @@
 
 require('logplease').setLogLevel('ERROR')
 
-const Promise = require('bluebird')
 const blessed = require('blessed')
-const IpfsDaemon = require('ipfs-daemon')
+console.log = () => {}
+const IPFS = require('ipfs')
 const Orbit = require('orbit_')
 const logo = require('./logo.js')
+const path = require('path')
 
 // Options
 let channel = 'ipfs'
 let user = process.argv[2] || 'anonymous' + new Date().getTime().toString().split('').splice(-4, 4).join('')
 
 // Directories to save IPFS and Orbit data to
-const dataDir = './data/' + user
-const ipfsDataDir = dataDir + '/ipfs'
+const dataDir = path.join(process.cwd(), './orbit/', user)
+const ipfsDataDir = path.join(dataDir, '/ipfs')
 
 // State
 let orbit
@@ -76,8 +77,11 @@ const createChannelView = () => {
     alwaysScroll: true,
     style: {
       fg: textColor,
-      bg: backgroundColor
-    }
+      bg: backgroundColor,
+      scrollbar: {
+        bg: 'blue'
+      },
+    },
   })
   // 🎁
   view.on('click', function(data) {
@@ -93,7 +97,7 @@ let logWindow = createChannelView()
 
 var statusBar = blessed.textbox({
   bottom: 1,
-  width: '50%',
+  width: '51%',
   height: 1,
   tags: true,
   style: barStyle
@@ -212,15 +216,18 @@ const read = () => {
 
 const log = (text, textOnly) => {
   const t = textOnly ? text : getFormattedTime(new Date().getTime()) + " " + notificationMarker + " " + text
-  if(channelViews[_currentChannel]) {
-    channelViews[_currentChannel].pushLine(t)
-    channelViews[_currentChannel].scrollTo(10000)
+  // if(channelViews[_currentChannel]) {
+  //   channelViews[_currentChannel].pushLine(t)
+  //   channelViews[_currentChannel].scrollTo(10000)
     logWindow.pushLine(t)
     logWindow.scrollTo(10000)
-  } else {
-    logWindow.pushLine(t)
-    logWindow.scrollTo(10000)
-  }
+  // } else {
+  //   logWindow.pushLine(t)
+  //   logWindow.scrollTo(10000)
+  // }
+
+  headerBar.setContent(` 🐼  Orbit v0.1.0 - https://github.com/orbitdb/orbit`)
+  headerBar.setFront()
 
   screen.render()
 }
@@ -244,24 +251,28 @@ const updateUI = () => {
   const channelsInfo = `${bracketOpen}${channels}${bracketClose}`
   statusBar.setContent(`${bracketOpen}${time}${bracketClose} ${bracketOpen}${user}${bracketClose} ${channelsInfo}`)
 
+  headerBar.setContent(` 🐼  Orbit v0.1.0 - https://github.com/orbitdb/orbit`)
+  headerBar.setFront()
+
   screen.render()
 }
 
 const addMessagesToUI = (channel, messages) => {
-  Promise.map(messages, (post) => {
-    const user = post.meta.from
+  const lines = messages.map(m => {
+    const user = m.Post.meta.from
     const username = `{grey-fg}<{/grey-fg} {bold}${user.name}{/bold}{grey-fg}>{/grey-fg}`
-    const line = `${getFormattedTime(post.meta.ts)} ${username} ${post.content}`
-    channelViews[channel].pushLine(line)
-    channelViews[channel].scrollTo(10000)
+    const line = `${getFormattedTime(m.Post.meta.ts)} ${username} ${m.Post.content}`
+    return line
+  })
 
-    if(channel !== _currentChannel)
-      unreadMessages[channel] ? unreadMessages[channel] += 1 : unreadMessages[channel] = 1
+  const box = channelViews[channel]
+  box.setContent(lines.join('\n'))
+  box.scrollTo(10000)
 
-    return
-  }, { concurrency: 1 })
-    .then((res) => updateUI())
-    .catch((e) => console.error(e))
+  if(channel !== _currentChannel)
+    unreadMessages[channel] ? unreadMessages[channel] += 1 : unreadMessages[channel] = 1
+
+  updateUI()
 }
 
 /* Start */
@@ -330,27 +341,52 @@ const logHelp = () => {
 // Init UI
 screen.title = 'Orbit'
 commandBar.setContent(`{right}Type ${boldText("/quit")} to exit. ${boldText("Ctrl-n")} and ${boldText("Ctrl-p")} to move between channels.{/right}`)
-headerBar.setContent(` 🐼  Orbit v0.0.1 - https://github.com/haadcode/orbit`)
-
+headerBar.setContent(` 🐼  Orbit v0.1.0 - https://github.com/orbitdb/orbit`)
+headerBar.setFront()
 // Output the logo
 log(logo, true)
 
 log("Starting IPFS daemon...")
+log(dataDir)
+log(ipfsDataDir)
 
 const daemonOptions = { 
-  IpfsDataDir: ipfsDataDir,
-  Addresses: {
-    API: '/ip4/127.0.0.1/tcp/0',
-    Swarm: ['/ip4/0.0.0.0/tcp/0'],
-    Gateway: '/ip4/0.0.0.0/tcp/0'
+  repo: ipfsDataDir,
+  EXPERIMENTAL: {
+    pubsub: true,
   },
+  config: {
+    Addresses: {
+      API: '/ip4/127.0.0.1/tcp/0',
+      Swarm: [
+        // '/ip4/0.0.0.0/tcp/0',
+        '/dns4/ws-star.discovery.libp2p.io/tcp/443/wss/p2p-websocket-star',
+      ],
+      Gateway: '/ip4/0.0.0.0/tcp/0'
+    },
+    // Bootstrap: [],
+    Discovery: {
+      MDNS: {
+        Enabled: true,
+        Interval: 10
+      },
+      webRTCStar: {
+        Enabled: false,
+      }
+    },
+  }
 }
 
-const ipfs = new IpfsDaemon(daemonOptions)//.then((res) => {
+const fetchMessages = async (orbit, channel) => {
+  const messages = await orbit.get(channel, null, null, 32)
+  await addMessagesToUI(channel, messages)
+}
+
+const ipfs = new IPFS(daemonOptions)
 ipfs.on('ready', () => {
   const options = {
-    cachePath: dataDir + '/orbit-db',
-    maxHistory: 0, 
+    cachePath: dataDir + '/orbitdb',
+    maxHistory: 32, 
     keystorePath: dataDir + '/keys'
   }
 
@@ -371,6 +407,22 @@ ipfs.on('ready', () => {
     screen.insert(channelViews[channel], 1)
     _currentChannel = channel
     log(`{${theme.higlightColor}-fg}{bold}${user}{/bold}{/${theme.higlightColor}-fg} has joined channel {bold}#${channel}{/bold}`)
+    log(`${orbit.getChannel(channel).feed.address.toString()}`)
+
+    setInterval(() => {
+      log(`${orbit.getChannel(channel).feed.address.toString()}, peers: ${orbit.peers.length}`)
+    }, 1000)
+
+    // Listen for new messages from the network (ie. database syncs)
+    const c = orbit.channels[channel]
+    if (c) {
+      c.feed.events.on('replicated', async (channel) => {
+        await fetchMessages(orbit, c.name)
+      })
+
+      c.feed.events.on('error', e => console.error(e))
+    }
+
     updateUI()
   })
 
@@ -387,13 +439,15 @@ ipfs.on('ready', () => {
     updateUI()
   })
 
-  orbit.events.on('message', (channel, message) => {
-    addMessagesToUI(channel, [message])
+  // FIX: currently emits only for local messages (sent by this orbit client)
+  orbit.events.on('message', async (channel, message) => {
+    await fetchMessages(orbit, channel)
   })
 
   // Connect to Orbit network
   log("Connecting to the network")
+
   orbit.connect(user)
     .then(() => orbit.join(channel))
-    .catch((e) => console.error(e))
+    .catch(e => console.error(e))
 })
