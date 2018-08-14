@@ -48,4 +48,4 @@ Contributions are welcome! Please open [an issue](https://github.com/orbitdb/orb
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) © 2016-2018 Protocol Labs Inc., Haja Networks Oy
