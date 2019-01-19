@@ -1,5 +1,7 @@
 # orbit-textui
 
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/orbitdb/Lobby)
+
 > Terminal client for [Orbit](https://github.com/orbitdb/orbit)
 
 ***A prototype terminal client for [Orbit](https://github.com/orbitdb/orbit)***
@@ -19,12 +21,11 @@ See also other Orbit clients:
 - [orbit-web](https://github.com/orbitdb/orbit-web) - Browser App
 - [orbit-electron](https://github.com/orbitdb/orbit-electron) - Desktop App
 
-
 ## Run
 
 Get the source code and install dependencies:
 
-```
+```sh
 git clone https://github.com/orbitdb/orbit-textui.git
 cd orbit-textui
 npm install
@@ -32,19 +33,23 @@ npm install
 
 Start the program:
 
-```
+```sh
 npm start
 ```
 
 Or instead of `npm start`, run the following to specify your chat name:
 
-```
+```sh
 node index <nickname>
 ```
 
 ## Contribute
 
-Contributions are welcome! Please open [an issue](https://github.com/orbitdb/orbit-textui/issues) if there is something you would like to see.
+We would be happy to accept PRs! If you want to work on something, it'd be good to talk beforehand to make sure nobody else is working on it. You can reach us [on Gitter](https://gitter.im/orbitdb/Lobby), or in the [issues section](https://github.com/orbitdb/orbit-textui/issues).
+
+We also have **regular community calls**, which we announce in the issues in [the @orbitdb welcome repository](https://github.com/orbitdb/welcome/issues). Join us!
+
+For specific guidelines for contributing to this repository, check out the [Contributing guide](CONTRIBUTING.md). For more on contributing to OrbitDB in general, take a look at the [@OrbitDB welcome repository](https://github.com/orbitdb/welcome). Please note that all interactions in [@OrbitDB](https://github.com/orbitdb) fall under our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
