@@ -2,9 +2,9 @@
 
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/orbitdb/Lobby)
 
-> Terminal client for [Orbit](https://github.com/orbitdb/orbit)
+> Prototype terminal client for [Orbit](https://github.com/orbitdb/orbit)
 
-***A prototype terminal client for [Orbit](https://github.com/orbitdb/orbit)***
+**Status**: The project hasn't been updated in a long time and is definitely out of date. We would love help, if you're interested in contributing!
 
 <img src="https://raw.githubusercontent.com/orbitdb/orbit-textui/master/screenshot.gif">
 
