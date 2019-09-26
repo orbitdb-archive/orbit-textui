@@ -1,5 +1,6 @@
 {
   "name": "orbit-textui",
+  "private": true,
   "version": "0.0.1",
   "description": "Terminal client for Orbit",
   "main": "index.js",
